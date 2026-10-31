@@ -2,14 +2,19 @@ package org.ercsn.budgeting.infrastructure.persistence.entity;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.ercsn.budgeting.domain.Category;
+import org.ercsn.budgeting.domain.Transaction;
+import org.ercsn.budgeting.domain.TransactionId;
 
 import java.util.UUID;
 
 @Entity
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
 public class TransactionEntity {
     @Id
@@ -17,4 +22,21 @@ public class TransactionEntity {
     private String description;
     private long amount;
     private Category category;
+
+    public static TransactionEntity from(Transaction transaction) {
+        return new TransactionEntity(
+                transaction.getId().id(),
+                transaction.getDescription(),
+                transaction.getAmount(),
+                transaction.getCategory());
+    }
+
+    public Transaction toDomain() {
+        return new Transaction(
+                new TransactionId(this.id),
+                this.description,
+                this.amount,
+                this.category
+        );
+    }
 }

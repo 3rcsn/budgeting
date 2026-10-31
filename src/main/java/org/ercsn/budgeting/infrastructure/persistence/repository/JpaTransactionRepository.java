@@ -9,9 +9,16 @@ import java.util.List;
 
 public class JpaTransactionRepository implements TransactionRepository {
 
+    private final TransactionEntityRepository transactionEntityRepository;
+
+    public JpaTransactionRepository(TransactionEntityRepository transactionEntityRepository) {
+        this.transactionEntityRepository = transactionEntityRepository;
+    }
+
     @Override
     public Transaction save(Transaction transaction) {
-        return null;
+        var entity = TransactionEntity.from(transaction);
+        return transactionEntityRepository.save(entity).toDomain();
     }
 
     @Override
