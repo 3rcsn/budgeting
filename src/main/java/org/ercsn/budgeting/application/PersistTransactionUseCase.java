@@ -4,6 +4,7 @@ import org.ercsn.budgeting.application.input.PersistTransactionInput;
 import org.ercsn.budgeting.application.output.TransactionOutput;
 import org.ercsn.budgeting.domain.Transaction;
 import org.ercsn.budgeting.domain.TransactionRepository;
+import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,6 +15,7 @@ public class PersistTransactionUseCase {
         this.transactionRepository = transactionRepository;
     }
 
+    @Tool(name = "persist-transaction", description = "Persiste uma nova transacao financeira")
     public TransactionOutput execute(PersistTransactionInput input) {
         var transaction = transactionRepository.save(
                 new Transaction(input.description(), input.amount(), input.category())
