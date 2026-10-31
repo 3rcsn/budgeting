@@ -1,77 +1,115 @@
-# Budgeting
+### Budgeting 
 
-A Spring Boot application that integrates with OpenAI via Spring AI to provide conversational AI endpoints.
+The **Budgeting** application is a modern Spring Boot service built with Java 25 and Spring AI that combines personal finance management with OpenAI-powered conversational AI and audio processing capabilities.
 
-## Overview
+---
 
-This project is built to deliver high utility with minimal overhead, providing direct integration with OpenAI's chat models using Spring AI. It exposes REST endpoints allowing users to interact with the LLM via either low-level model abstractions or the fluent `ChatClient` API.
+### Key Capabilities & Modules
 
-## Prerequisites
+#### 1. Conversational AI & Tool Calling
+- **Spring AI Integration (`gpt-4o-mini`)**:
+  - Exposes REST endpoints (`/api/chat` and `/api/chat-model`) for prompt-based LLM interactions using both low-level `OpenAiChatModel` and the fluent `ChatClient` API.
+  - Supports function calling / tool calling allowing AI models to invoke internal system capabilities or domain actions dynamically.
 
-- **Java 25** (or compatible JDK)
-- **OpenAI API Key**
+#### 2. Audio Processing (STT & TTS)
+- **Speech-to-Text (Transcription)**:
+  - Uses OpenAI Whisper (`whisper-1`) via `/api/transcribe` (accepting multipart audio uploads) to transcribe spoken audio clips (e.g., voice expense recordings).
+- **Text-to-Speech (Audio Synthesis)**:
+  - Uses OpenAI TTS (`gpt-4o-mini-tts` / `nova` voice) via `/api/sinthesize` to convert text inputs into MP3 audio streams.
 
-## Configuration
+#### 3. Transaction Management (Clean / Hexagonal Architecture)
+- **Domain & Application**:~~~~
+  - Core domain models (`Transaction`, `TransactionId`, `Category`) and use case `PersistTransactionUseCase`.
+  - Supports transaction categorization (`GROCERIES`, `PHARMA`, `AUTO`).
+- **Infrastructure & Persistence**:
+  - Exposes `/transactions` REST API for creating and recording expenses.
+  - Persists transaction records to MySQL using Spring Data JPA / Hibernate.
 
-Set the required `OPENAI_API_KEY` environment variable before running the application:
+---
 
-```bash
-export OPENAI_API_KEY=your_openai_api_key_here
-```
+### Tech Stack Overview
 
-On Windows PowerShell:
+- **Language / Runtime**: Java 25
+- **Framework**: Spring Boot 4.1.x, Spring Data JPA
+- **AI Framework**: Spring AI 2.0.0-M4 (OpenAI Starter)
+- **Database**: MySQL 9.6 (configured via `docker-compose.yaml` on port `3307`)
+- **Build & Dependencies**: Gradle with Lombok
+- **Testing**: JUnit 5, AssertJ, Spring Boot Integration Tests with environment-conditional OpenAI execution (`@EnabledIfEnvironmentVariable`)
 
-```powershell
-$env:OPENAI_API_KEY="your_openai_api_key_here"
-```
+---
 
-Application properties (`src/main/resources/application.properties`):
-- `spring.application.name`: `budgeting`
-- `spring.ai.openai.chat.options.model`: `gpt-4o-mini`
-- `spring.ai.openai.chat.options.response-format.type`: `TEXT`
+### Essential Configuration Reference
 
-## Getting Started
+#### Environment Variables
 
-### Build and Run
+Set the `OPENAI_API_KEY` environment variable before running the application:
 
-To build and run the application locally:
-
-```bash
-./gradlew bootRun
-```
-
-On Windows:
-
-```cmd
-gradlew.bat bootRun
-```
-
-### Running Tests
-
-To run the test suite:
-
-```bash
-./gradlew test
-```
-
-*Note: Integration tests requiring OpenAI connectivity will execute when the `OPENAI_API_KEY` environment variable is present.*
-
-## API Endpoints
-
-### 1. Chat via `OpenAiChatModel`
-
-- **Endpoint:** `GET /api/chat`
-- **Query Parameter:** `prompt` (string)
-- **Example Request:**
-  ```http
-  GET http://localhost:8080/api/chat?prompt=Hello%20World
+- **macOS / Linux**:
+  ```bash
+  export OPENAI_API_KEY="sk-proj-your-openai-api-key"
+  ```
+- **Windows (PowerShell)**:
+  ```powershell
+  $env:OPENAI_API_KEY="sk-proj-your-openai-api-key"
+  ```
+- **Windows (CMD)**:
+  ```cmd
+  set OPENAI_API_KEY=sk-proj-your-openai-api-key
   ```
 
-### 2. Chat via `ChatClient`
+#### Application Properties Reference (`application.properties`)
 
-- **Endpoint:** `GET /api/chat-model`
-- **Query Parameter:** `prompt` (string)
-- **Example Request:**
-  ```http
-  GET http://localhost:8080/api/chat-model?prompt=Hello%20World
-  ```
+| Property | Default Value | Description |
+| :--- | :--- | :--- |
+| `spring.application.name` | `budgeting` | Application identifier name |
+| `spring.ai.openai.api-key` | `${OPENAI_API_KEY}` | OpenAI API Key |
+| `spring.ai.openai.chat.options.model` | `gpt-4o-mini` | OpenAI Chat model |
+| `spring.ai.openai.chat.options.response-format.type` | `TEXT` | Response format for chat model (`TEXT` or `JSON_OBJECT`) |
+| `spring.ai.model.audio.transcription` | `openai` | Speech-to-text provider |
+| `spring.ai.openai.audio.transcription.options.model` | `whisper-1` | Whisper transcription model |
+| `spring.ai.openai.audio.transcription.options.language` | `pt` | Default audio spoken language code |
+| `spring.ai.openai.audio.transcription.options.temperature` | `0` | Sampling temperature for transcription |
+| `spring.ai.openai.audio.transcription.options.response-format` | `text` | Transcription response output format |
+| `spring.ai.openai.audio.transcription.options.prompt` | *(custom pt-br prompt)* | Prompt guide for audio transcription context |
+| `spring.ai.model.audio.speech` | `openai` | Text-to-speech provider |
+| `spring.ai.openai.audio.speech.options.model` | `gpt-4o-mini-tts` | Text-to-speech model |
+| `spring-ai.openai.audio.speech.options.voice` | `nova` | Voice persona (`nova`, `alloy`, `echo`, `fable`, `onyx`, `shimmer`) |
+| `spring-ai.openai.audio.speech.options.speed` | `1.2` | Voice playback speed |
+| `spring.ai.openai.audio.speech.options.response-format` | `mp3` | Synthesized audio output format (`mp3`, `wav`, etc.) |
+| `spring.jpa.hibernate.ddl-auto` | `update` | Hibernate schema management |
+| `spring.jpa.show-sql` | `true` | SQL query logging |
+| `logging.level.org.springframework.ai` | `DEBUG` | Log level for Spring AI operations |
+
+#### Database Connection (Docker Compose)
+
+| Setting | Default |
+| :--- | :--- |
+| **Host / Port** | `localhost:3307` (mapped to container `3306`) |
+| **Database** | `transaction` |
+| **Username** | `app` |
+| **Password** | `app` |
+| **Image** | `mysql:9.6` |
+
+---
+
+### Project Architecture & Layout
+
+```
+src/main/java/org/ercsn/budgeting/
+├── application/                # Business logic, use cases, inputs/outputs
+│   ├── input/
+│   ├── output/
+│   └── PersistTransactionUseCase.java
+├── domain/                     # Entities, value objects, domain interfaces
+│   ├── Category.java
+│   ├── Transaction.java
+│   ├── TransactionId.java
+│   └── TransactionRepository.java
+├── infrastructure/             # Controllers, JPA entities, database repositories
+│   ├── http/
+│   └── persistence/
+├── ChatClientController.java   # ChatClient REST controller
+├── ChatModelController.java    # OpenAiChatModel REST controller
+├── TextToSpeechController.java # OpenAI TTS REST controller
+└── TranscriptionController.java# OpenAI Whisper REST controller
+```
