@@ -4,7 +4,9 @@ import org.ercsn.budgeting.application.input.PersistTransactionInput;
 import org.ercsn.budgeting.application.output.TransactionOutput;
 import org.ercsn.budgeting.domain.Transaction;
 import org.ercsn.budgeting.domain.TransactionRepository;
+import org.springframework.stereotype.Service;
 
+@Service
 public class PersistTransactionUseCase {
     private final TransactionRepository transactionRepository;
 
